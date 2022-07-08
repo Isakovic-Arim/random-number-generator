@@ -1,3 +1,8 @@
+<?php
+    session_start();
+?>
+
+<!DOCTYPE html>
 <html>
 <head>
     <title>Random Number Generator</title>
@@ -5,47 +10,44 @@
 </head>
 <body>
     <?php
-    $amount = $_POST["amount"];
-    $sides  = $_POST["sides"];
 
-    // echo nl2br ($amount . " dice rolled\n");
-    // echo nl2br ("dice with " . $sides . " sides rolled\n");
-    $result = 0;
-
-    for ($i=0; $i < $amount; $i++) { 
-        $result = $result  + rand(0, $sides);
+    if (!isset($_SESSION["results"])) {
+        $_SESSION["results"] = array();
     }
-    // echo "Result: " . $result;
+
+    if (!isset($_SESSION["total"])) {
+        $_SESSION["total"] = 0;
+    }
+
+    if (isset($_POST["submit"])) {
+        // Checking for isset here is not necessary due to 
+        // the preexisting form validation in the mainpage
+        $amount = $_POST["amount"];
+        $sides  = $_POST["sides"];
+
+        $result = new stdClass;
+        $result->dice = $amount;
+        $result->sides = $sides;
+        $result->outcome = 0;
+
+        for ($i=0; $i < $amount; $i++) { 
+            $result->outcome += rand(1, $sides);
+        }
+
+        // is faster than array_push
+        $_SESSION["results"][] = $result;
+
+        $_SESSION["total"] += $amount;
+    }
+
+    if (isset($_POST["clear"])) {
+        $_SESSION["results"] = array();
+        $_SESSION["total"] = 0;
+    }
     ?>
 
     <header>
-        <h1>Random Number Generator</h1>
-    </header>
-    <main>
-        <form method="POST">
-            <fieldset id="assign-amount">
-                <legend>Dice to roll</legend>
-                <input type="number" name="amount" id="amount" value="<?php echo $amount; ?>" required>
-                <label for="amount">Dice</label>
-            </fieldset>
-            <fieldset id="assign-sides">
-                <legend>Sides</legend>
-                <select name="sides" required>
-                    <option value="<?php echo $sides; ?>"><?php echo $sides; ?> Sides</option>
-                    <option value="4">4 Sides</option>
-                    <option value="6">6 Sides</option>
-                    <option value="8">8 Sides</option>
-                    <option value="10">10 Sides</option>
-                    <option value="12">12 Sides</option>
-                    <option value="20">20 Sides</option>
-                </select>
-            </fieldset>
-            <div id="roll">
-                <input type="submit" value="Roll" id="submit">
-            </div>
-        </form>
-        <div id="output">
-            <div class="wrapper">
+    <div class="wrapper">
                 <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="1em" height="1em" 
                     preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
                     <g fill="currentColor">
@@ -56,13 +58,61 @@
                     </g>
                 </svg>
             </div>
-            <div id="result">
-                <?php
-                echo nl2br ($amount . " dice rolled, each with sides of " . $sides . "\n");
-                echo "Result: " . $result;
-                ?>
+        <h1>Random Number Generator</h1>
+    </header>
+    <main>
+        <form method="POST">
+            <fieldset id="assign-amount">
+                <legend>Dice to roll</legend>
+                <input type="number" name="amount" id="amount" value="<?php echo $amount; ?>" min="1" required>
+            </fieldset>
+            <fieldset id="assign-sides">
+                <legend>Sides</legend>
+                <select name="sides" required>
+                    <option value="4">4 Sides</option>
+                    <option value="6" selected>6 Sides</option>
+                    <option value="8">8 Sides</option>
+                    <option value="10">10 Sides</option>
+                    <option value="12">12 Sides</option>
+                    <option value="20">20 Sides</option>
+                </select>
+            </fieldset>
+            <div id="roll">
+                <input type="submit" name="submit" value="Roll" id="submit">
+                <input type="submit" name="clear" value="Clear" id="clear">
             </div>
+        </form>
+        <div id="output">
+                <?php
+                    $counter = 0;
+                    foreach ($_SESSION["results"] as $content) {
+                        $counter++;
+                        echo "<div>";
+                        echo "<strong>Roll "   . $counter . "</strong>";
+                        echo "<p>Dice: "    . $content->dice . "</p>";
+                        echo "<p>Sides: "   . $content->sides . "</p>";
+                        echo "<p>Result: " . $content->outcome . "</p>";
+                        echo "</div>";
+                    }
+                ?>
         </div>
+        <?php echo "<strong>Total dice rolled: </strong>" . $_SESSION["total"]; ?>
     </main>
+
+    <script>
+        // AJAX implementation follows
+        
+        // const submitBtn = document.getElementById('submit');
+        // submitBtn.addEventListener('click', addResults);
+        
+        // const grid = document.getElementById('output');
+        
+        // async function addResults() {
+        //     const xmlhttp = new XMLHttpRequest();
+        //     await xmlhttp.onload = function() {
+            
+        //     }
+        // }
+    </script>
 </body>
 </html>
